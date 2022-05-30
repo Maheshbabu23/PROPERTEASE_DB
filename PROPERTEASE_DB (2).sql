@@ -630,7 +630,7 @@ ELSEIF OCCUPANCY__TYPE='Regular' THEN
 IF GUEST__STATUS='Active' THEN
 SELECT
 (CEILING(datediff(curdate()+1, check_in_date)/30)*b.default_rent
-+ b.security_deposit
++ g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0)) Guest_Due_Amount
 FROM guest g JOIN beds b ON g.bed_id = b.bed_id
@@ -692,7 +692,7 @@ COUNT(
 CASE g.guest_status
 WHEN 'Active' THEN
 IF((CEILING(datediff(curdate()+1, check_in_date)/30)*b.default_rent
-+ b.security_deposit
++ g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0))>0,1,NULL)
 WHEN 'InNotice' THEN
@@ -726,7 +726,7 @@ COUNT(
 CASE g.guest_status
 WHEN 'Active' THEN
 IF((CEILING(datediff(curdate()+1, check_in_date)/30)*b.default_rent
-+ b.security_deposit
++ g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0))>0,1,NULL)
 WHEN 'InNotice' THEN
@@ -787,7 +787,7 @@ SUM(
 CASE g.guest_status
 WHEN 'Active' THEN
 (CEILING(datediff(curdate()+1, check_in_date)/30)*b.default_rent
-+ b.security_deposit
++ g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0))
 WHEN 'InNotice' THEN
