@@ -185,6 +185,32 @@ INSERT INTO `guest_id` VALUES (1);
 UNLOCK TABLES;
 
 --
+-- Table structure for table `guest_profile`
+--
+
+DROP TABLE IF EXISTS `guest_profile`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `guest_profile` (
+  `id` varchar(255) NOT NULL,
+  `data` longblob,
+  `guest_id` varchar(255) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `type` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `guest_profile`
+--
+
+LOCK TABLES `guest_profile` WRITE;
+/*!40000 ALTER TABLE `guest_profile` DISABLE KEYS */;
+/*!40000 ALTER TABLE `guest_profile` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `hibernate_sequence`
 --
 
@@ -263,6 +289,30 @@ CREATE TABLE `rooms` (
 LOCK TABLES `rooms` WRITE;
 /*!40000 ALTER TABLE `rooms` DISABLE KEYS */;
 /*!40000 ALTER TABLE `rooms` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `security_deposit`
+--
+
+DROP TABLE IF EXISTS `security_deposit`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `security_deposit` (
+  `id` int NOT NULL,
+  `occupency_type` varchar(255) DEFAULT NULL,
+  `security_deposit_amount` double DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `security_deposit`
+--
+
+LOCK TABLES `security_deposit` WRITE;
+/*!40000 ALTER TABLE `security_deposit` DISABLE KEYS */;
+/*!40000 ALTER TABLE `security_deposit` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -866,4 +916,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-05-13 21:37:49
+-- Dump completed on 2022-06-01 17:05:51
