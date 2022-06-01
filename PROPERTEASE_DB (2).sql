@@ -629,7 +629,7 @@ SELECT 0 Guest_Due_Amount ;
 ELSEIF OCCUPANCY__TYPE='Regular' THEN
 IF GUEST__STATUS='Active' THEN
 SELECT
-(CEILING(datediff(curdate()+1, check_in_date)/30)*b.default_rent
+(CEILING(datediff(DATE_ADD(curdate(),INTERVAL 1 DAY  ), check_in_date)/30)*b.default_rent
 + g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0)) Guest_Due_Amount
@@ -691,7 +691,7 @@ SELECT
 COUNT(
 CASE g.guest_status
 WHEN 'Active' THEN
-IF((CEILING(datediff(curdate()+1, check_in_date)/30)*b.default_rent
+IF((CEILING(datediff(DATE_ADD(curdate(),INTERVAL 1 DAY  ), check_in_date)/30)*b.default_rent
 + g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0))>0,1,NULL)
@@ -725,7 +725,7 @@ SELECT
 COUNT(
 CASE g.guest_status
 WHEN 'Active' THEN
-IF((CEILING(datediff(curdate()+1, check_in_date)/30)*b.default_rent
+IF((CEILING(datediff(DATE_ADD(curdate(),INTERVAL 1 DAY  ), check_in_date)/30)*b.default_rent
 + g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0))>0,1,NULL)
@@ -786,7 +786,7 @@ SELECT
 SUM(
 CASE g.guest_status
 WHEN 'Active' THEN
-(CEILING(datediff(curdate()+1, check_in_date)/30)*b.default_rent
+(CEILING(datediff(DATE_ADD(curdate(),INTERVAL 1 DAY  ), check_in_date)/30)*b.default_rent
 + g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0))
