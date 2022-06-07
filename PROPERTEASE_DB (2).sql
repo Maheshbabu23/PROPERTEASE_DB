@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.28, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.29, for Win64 (x86_64)
 --
 -- Host: localhost    Database: buildingdb
 -- ------------------------------------------------------
--- Server version	8.0.28
+-- Server version	8.0.29
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -715,10 +715,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `initiate_check_out`(GUEST__ID VARCH
 BEGIN
 DECLARE NOTICE__DATE DATE;
 DECLARE CHECK_OUT__DATE DATE;
-SET NOTICE__DATE = NOW();
-SET CHECK_OUT__DATE = DATE_ADD(NOTICE__DATE,INTERVAL 15 DAY);
+SET NOTICE__DATE = curdate();
+SET CHECK_OUT__DATE = DATE_ADD(NOTICE__DATE,  interval (SELECT notice_days FROM security_deposit WHERE occupency_type = 'Regular') day);
 UPDATE guest SET planned_check_out_date = CHECK_OUT__DATE ,notice_date = NOTICE__DATE,guest_status='InNotice' WHERE ID=GUEST__ID and guest_status = 'Active' ;
-select date(planned_check_out_date) , date(notice_date)  from guest where id = GUEST__ID ;
+select date_format(date(planned_check_out_date),'%d-%m-%Y') planned_checkout , date_format(date(notice_date),'%d-%m-%Y') notice_Date  from guest where id = GUEST__ID ;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -916,4 +916,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-06-01 17:05:51
+-- Dump completed on 2022-06-06 15:33:44
