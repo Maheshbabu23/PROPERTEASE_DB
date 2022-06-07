@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.29, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.28, for Win64 (x86_64)
 --
 -- Host: localhost    Database: buildingdb
 -- ------------------------------------------------------
--- Server version	8.0.29
+-- Server version	8.0.28
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -35,7 +35,6 @@ CREATE TABLE `beds` (
   `floor_id` int DEFAULT NULL,
   `guest_id` varchar(255) DEFAULT NULL,
   `room_id` int DEFAULT NULL,
-  `security_deposit` double DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -72,6 +71,31 @@ CREATE TABLE `buildings` (
 LOCK TABLES `buildings` WRITE;
 /*!40000 ALTER TABLE `buildings` DISABLE KEYS */;
 /*!40000 ALTER TABLE `buildings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `defaults`
+--
+
+DROP TABLE IF EXISTS `defaults`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `defaults` (
+  `id` int NOT NULL,
+  `notice_days` int NOT NULL,
+  `occupency_type` varchar(255) DEFAULT NULL,
+  `security_deposit_amount` double DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `defaults`
+--
+
+LOCK TABLES `defaults` WRITE;
+/*!40000 ALTER TABLE `defaults` DISABLE KEYS */;
+/*!40000 ALTER TABLE `defaults` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -292,30 +316,6 @@ LOCK TABLES `rooms` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `security_deposit`
---
-
-DROP TABLE IF EXISTS `security_deposit`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `security_deposit` (
-  `id` int NOT NULL,
-  `occupency_type` varchar(255) DEFAULT NULL,
-  `security_deposit_amount` double DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `security_deposit`
---
-
-LOCK TABLES `security_deposit` WRITE;
-/*!40000 ALTER TABLE `security_deposit` DISABLE KEYS */;
-/*!40000 ALTER TABLE `security_deposit` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `users`
 --
 
@@ -423,19 +423,20 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `BUILDING_WISE_TOTAL_DUE`(BUILDING__ID INT)
 BEGIN
-SELECT
+SELECT 
 sum(
 CASE g.guest_status
 WHEN 'Active' THEN
-IF( NOW()>=DATE_ADD(g.check_in_date,INTERVAL 30 DAY),(b.default_rent),0)
+IF( NOW()>=DATE_ADD(g.check_in_date,INTERVAL 30 DAY),ceiling((datediff(now(),g.check_in_date))/30)*(g.default_rent)
+-IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)+g.security_deposit,0)
 WHEN 'InNotice' THEN
-(round(datediff(planned_check_out_date, check_in_date)*b.default_rent/30)
+(round(datediff(planned_check_out_date, check_in_date)*g.default_rent/30)
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0))
 END
 ) Due_Amount
 FROM guest g JOIN beds b ON g.bed_id = b.bed_id
-WHERE g.guest_status in ('Active','InNotice') AND g.occupancy_type='Regular'  AND g.building_id = BUILDING__ID;
+WHERE g.guest_status in ('Active','InNotice') AND g.occupancy_type='Regular'  AND g.building_id =BUILDING__ID;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -679,7 +680,7 @@ SELECT 0 Guest_Due_Amount ;
 ELSEIF OCCUPANCY__TYPE='Regular' THEN
 IF GUEST__STATUS='Active' THEN
 SELECT
-(CEILING(datediff(DATE_ADD(curdate(),INTERVAL 1 DAY  ), check_in_date)/30)*b.default_rent
+(CEILING(datediff(DATE_ADD(curdate(),INTERVAL 1 DAY  ), check_in_date)/30)*g.default_rent
 + g.security_deposit
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0)) Guest_Due_Amount
@@ -688,7 +689,7 @@ WHERE g.guest_status ='Active' AND g.occupancy_type='Regular' and g.id=GUEST__ID
 
 ELSEIF GUEST__STATUS='InNotice' THEN
 SELECT
-(round(datediff(planned_check_out_date, check_in_date)*b.default_rent/30)
+(round(datediff(planned_check_out_date, check_in_date)*g.default_rent/30)
 -IFNULL((SELECT sum(payments.amount_paid) FROM payments WHERE guest_id= g.id),0)
 +IFNULL((SELECT sum(payments.refund_amount) FROM payments WHERE guest_id= g.id),0)) Guest_Due_Amount
 FROM guest g join beds b on g.bed_id = b.bed_id
@@ -716,7 +717,7 @@ BEGIN
 DECLARE NOTICE__DATE DATE;
 DECLARE CHECK_OUT__DATE DATE;
 SET NOTICE__DATE = curdate();
-SET CHECK_OUT__DATE = DATE_ADD(NOTICE__DATE,  interval (SELECT notice_days FROM security_deposit WHERE occupency_type = 'Regular') day);
+SET CHECK_OUT__DATE = DATE_ADD(NOTICE__DATE,  interval (SELECT notice_days FROM defaults WHERE occupency_type = 'Regular') day);
 UPDATE guest SET planned_check_out_date = CHECK_OUT__DATE ,notice_date = NOTICE__DATE,guest_status='InNotice' WHERE ID=GUEST__ID and guest_status = 'Active' ;
 select date_format(date(planned_check_out_date),'%d-%m-%Y') planned_checkout , date_format(date(notice_date),'%d-%m-%Y') notice_Date  from guest where id = GUEST__ID ;
 END ;;
@@ -916,4 +917,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-06-06 15:33:44
+-- Dump completed on 2022-06-07 15:22:02
